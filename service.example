@@ -3,8 +3,8 @@ Description=Portfolio Application
 After=network.target
 
 [Service]
-ExecStart=/root/felixcaldeira.de/portfolio-backend
-WorkingDirectory=/root/felixcaldeira.de
+ExecStart=/root/pudu/pudu
+WorkingDirectory=/root/pudu
 Restart=always
 RestartSec=5
 User=root
