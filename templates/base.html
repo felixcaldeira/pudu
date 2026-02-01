@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page_title %}{{ page_title }} - {% endif %}PuDU</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    {% block head %}{% endblock head %}
+</head>
+<body>
+    <header class="menu">                            
+        <a href="/">
+            <i></i>
+            <span>PuDU</span>
+        </a>
+        <button>
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <nav>
+            <div class="container">
+                <a href="/material">Unterrichtsmaterialien</a>
+            </div>
+            <div class="container">
+                <a href="/about">Über uns</a>
+            </div>
+            <div class="container">
+                <a href="/news">Aktuelles</a>
+            </div>
+            <div class="container">
+                <a href="/workshops">Workshops</a>
+            </div>
+            <div class="container">
+                <a href="/authors">Autor*innen</a>
+            </div>
+            <div class="container">
+                <a href="/contact">Kontakt</a>
+            </div>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock content %}
+    </main>
+    <footer>
+        <section>
+            © {{ now() | date(format="%Y") }} PuDU-Netzwerk
+        </section>
+    </footer>
+</body>
+</html>
