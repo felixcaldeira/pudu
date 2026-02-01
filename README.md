@@ -20,14 +20,14 @@ cargo run
 ### Production
 ```
 cargo build --release
-cp ./target/release/portfolio-backend .
+cp ./target/release/pudu .
 ```
 
 ### To run it as a service
-- Create portfolio-backend.service file into /lib/systemd/system
+- Create pudu.service file into /lib/systemd/system
 
 ```
 sudo systemctl daemon-reload
-sudo systemctl start portfolio-backend
-sudo systemctl enable portfolio-backend
+sudo systemctl start pudu
+sudo systemctl enable pudu
 ```
