@@ -12,7 +12,7 @@ cp env.example .env
 cargo install sqlx-cli --features mysql
 
 ### Run migrations
-sqlx migrate run --database-url "mysql://portfolio_user:password@localhost/portfolio"
+sqlx migrate run --database-url "mysql://pudu_user:password@localhost/pudu"
 
 ### Build and run
 cargo run
