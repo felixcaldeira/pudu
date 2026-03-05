@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+    main {
+        align-items: center;
+    }
+    .contact-container {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+    }
+    .contact-container > * {
+        flex: 1;
+    }
+    .contact-container > section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .contact-container h1 {
+        margin-bottom: 1rem;
+    }
+    error.contact-error {
+        background: #ff7b7b;
+        color: #6e1616;
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+    .contact-success {
+        background: #5ebd59;
+        color: var(--font);
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+    .contact-container form {
+        padding: 3rem 2rem;
+        border-radius: 1rem;
+        background-color: var(--accent);
+        color: var(--background);
+    }
+    .contact-container form, .contact-container form > section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        width: 100%;
+    }
+    .contact-container form > section {
+        gap: 0;
+    }
+    .contact-container form > section:has(input[name=datenschutz]) {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 0.3rem;
+    }
+    .contact-container form > section:has(input[name=datenschutz]) label {
+        font-size: 1rem !important;
+    }
+    .contact-container form > section:has(input[name=datenschutz]) a {
+        text-decoration: underline;
+    }
+    .contact-container form label {
+        font-size: 0.8rem;
+    }
+    .contact-container form label:has(+ input:required):after, .contact-container form label:has(+ textarea:required):after {
+        content:" *";
+        color: red;
+    }
+    .contact-container form input,
+    .contact-container form textarea {
+        background: var(--background);
+        border: 2px solid var(--background);
+        margin-top: 0.3rem;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 1rem;
+        transition: border-color 0.2s ease;
+    }
+    .contact-container form textarea {
+        resize: vertical;
+        height: 8rem;
+    }
+    .contact-container form input:focus, .contact-container form input:hover,
+    .contact-container form textarea:focus, .contact-container form textarea:hover  {
+        outline: none;
+        border-color: #fff;
+    }
+    .contact-container form button {
+        padding: 0.5rem;
+        font-size: 1rem;
+    }
+    @media (max-width: 650px) {
+        .contact-container {
+            flex-direction: column;
+            gap: 2rem;
+        }
+        .contact-container h1 {
+            margin-bottom: 0;
+        }
+    }
+</style>
+{% endblock head %} 
+
+{% block content %}
+<container class="contact-container">
+    <section>
+        <h1>Kontakt</h1>
+        <p style="white-space: pre-line;">PuDU-Netzwerk
+            Schöne Straße 123
+            20000 Hamburg
+        </p>
+        <a class="unli" href="tel:+4912345">Tel.: 12345</a>
+        <a class="unli" href="mailto:info@pudu-netzwerk.de">
+            info@pudu-netzwerk.de
+        </a>
+    </section>
+    <form action="/contact" method="post">
+        {% if error %}
+        <error class="contact-error">{{ error }}</error>
+        {% endif %}
+        {% if success %}
+        <span class="contact-success">{{ success }}</span>
+        {% endif %}
+        <section>
+            <label for="name">Vor- und Nachname</label>
+            <input 
+                type="text" 
+                id="name" 
+                name="name"
+                required 
+                autocomplete="name"
+                placeholder="Geben Sie Ihren Vor- und Nachnamen an."
+                value="{{ contact_name | default(value="") }}"
+            >
+        </section>
+        <section>
+            <label for="email">E-Mail Adresse</label>
+            <input 
+                type="text" 
+                id="email" 
+                name="email"
+                required 
+                autocomplete="email"
+                placeholder="Geben Sie Ihre E-Mail Adresse an."
+                value="{{ contact_email | default(value="") }}"
+            >
+        </section>
+        <section>
+            <label for="">Telefonnummer (optional)</label>
+            <input 
+                type="text" 
+                id="tel" 
+                name="tel" 
+                autocomplete="tel"
+                placeholder="Geben Sie Ihre Telefonnummer an."
+                value="{{ contact_tel | default(value="") }}"
+            >
+        </section>
+        <section>
+            <label for="message">Nachricht</label>
+            <textarea 
+                type="text" 
+                id="message" 
+                name="message"
+                required
+                placeholder="Ihre Nachricht für uns."
+            >{{ contact_message | default(value="") }}</textarea>
+        </section>
+        <section>
+            <input type="checkbox" id="datenschutz" name="datenschutz">
+            <label for="datenschutz">
+                Die <a href="/datenschutz">Datenschutzrichtlinien</a> zur Verarbeitung meiner personenbezogenen Daten habe ich gelesen und bin damit einverstanden.
+            </label>
+        </section>
+        <button type="submit">Abschicken</button>
+    </form>
+</container>
+{% endblock content %}

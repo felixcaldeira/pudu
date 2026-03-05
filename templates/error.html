@@ -1,9 +1,21 @@
 {% extends "base.html" %}
 
+{% block head %}
+    <style>
+        main {
+            align-items: center;
+            /* gap: 1rem; */
+        }
+        main a {
+            padding-top: 1rem;
+        }
+    </style>
+{% endblock head %}
+
 {% block content %}
     <h1>{{ status }}</h1>
     <p>{{ message }}</p>
-    <a href="/">Zur Startseite</a>
+    <a class="unli" href="/">← Zurück zur Startseite</a>
 {% endblock content %}
 
 <!-- TODO improve -->

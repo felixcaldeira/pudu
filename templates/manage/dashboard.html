@@ -1,0 +1,20 @@
+{% extends "manage/dashboard-base.html" %}
+
+{% block manage_head  %}
+<style>
+    .manage-header {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+</style>
+{% endblock manage_head  %}
+
+{% block manage_content  %}
+<span class="manage-location"><a href="/manage">Dashboard</a></span>
+<section class="manage-header">
+    <h2>Dashboard</h2>
+</section>
+{% endblock manage_content  %}

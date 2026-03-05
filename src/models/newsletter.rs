@@ -1,7 +1,7 @@
 // src/models/newsletter.rs
 use serde::{Deserialize, Serialize};
 use chrono::{NaiveDateTime};
-use crate::handlers::error::AppError;
+use crate::AppError;
 use sqlx::FromRow;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -11,9 +11,10 @@ pub struct Newsletter {
 
     pub title: String,
     pub description: String,
-    pub content: String,
+    pub content: Option<String>,
     
     pub published: Option<i8>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
 }
+// todo

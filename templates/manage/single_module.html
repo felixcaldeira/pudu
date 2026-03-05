@@ -1,0 +1,290 @@
+{% extends "manage/dashboard-base.html" %}
+
+{% block manage_head  %}
+<style>
+    .manage-header {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    .manage-content-nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+        gap: 1rem;
+        padding: 0.5rem 1rem;
+        background: var(--accent);
+        color: var(--background);
+        border-radius: 1rem;
+    }
+    .manage-content-nav a {
+        font-weight: 500;
+        text-transform: uppercase;
+        border-bottom: 1px solid transparent;
+        transition: border-bottom-color 0.2s ease;
+    }
+    .manage-content-nav a:hover,
+    .manage-content-nav a.active {
+        border-bottom-color: var(--background);
+    }
+    .manage-content form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+    }
+    .manage-content form error {
+        display: none;
+        background: var(--emphasis);
+        color: var(--background);
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+    }
+    .manage-content form error.active {
+        display: block;
+    }
+    .manage-content form label {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+    }
+    .manage-content .grade-checkboxes {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin-top: 0.3rem;
+        gap: 0rem 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background-color: var(--background);
+    }
+    .manage-content .checkbox-group {
+        display: inline;
+    }
+    .manage-content form input[type=text],
+    .manage-content form textarea,
+    .manage-content form select {
+        background: var(--background);
+        width: 100%;
+        border: 2px solid var(--background);
+        margin-top: 0.3rem;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 1rem;
+        transition: border-color 0.2s ease;
+        resize: vertical;
+    }
+    .manage-content form textarea {
+        min-height: 100px;
+    }
+    .manage-content form input:focus, .manage-content form input:hover,
+    .manage-content form textarea:focus, .manage-content form textarea:hover,
+    .manage-content form select:focus, .manage-content form select:hover {
+        outline: none;
+        border-color: #fff;
+    }
+    .manage-content button[class="cancel"] {
+        background: var(--text);
+        color: var(--background);
+    }
+    .manage-content button[class="delete"] {
+        background: var(--emphasis);
+        color: var(--background);
+    }
+    .manage-content .modules {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .manage-content .module {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    .manage-content .module-image {
+        background-image: url("/static/symbols/image-missing.svg");
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 7rem;
+        aspect-ratio: 1 / 1;
+        border-radius: 1rem;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .manage-content .module-image img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+    }
+    .manage-content .module-details {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        flex-grow: 1;
+    }
+    .manage-content .module-details h3 {
+        margin: 0 0 0.5rem 0;
+    }
+    .manage-content .module-details p {
+        margin: 0.2rem 0;
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    .manage-content .module-tools {
+        display: flex;
+        gap: 0.5rem;
+        align-self: flex-start;
+        flex-wrap: wrap;
+    }
+    .module-category-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        background: var(--background);
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        margin-top: 0.3rem;
+    }
+</style>
+{% endblock manage_head  %}
+
+{% block manage_content  %}
+<!-- for Module::update -->
+<span class="manage-location"><a href="/manage">Dashboard</a> / <a href="/manage/modules">Unterrichtseinheiten</a> / <a href="/manage/modules/{{module_category.slug}}">{{module_category.title}}</a> / <a href="/manage/modules/{{module_category.slug}}/{{module.slug}}">{{module.title}}</a></span>
+<section class="manage-header">
+    <h2>{{module.title}}</h2>
+</section>
+<section class="manage-content-nav">
+    <a href="/manage/modules/{{module_category.slug}}/{{module.slug}}" class="active">Übersicht</a>
+    <a href="/manage/modules/{{module_category.slug}}/{{module.slug}}/lessons">Stundenablauf</a>
+    <a href="/manage/modules/{{module_category.slug}}/{{module.slug}}/materials">Materialien</a>
+</section>
+<form action="/manage/modules/{{module_category.slug}}/{{module.slug}}" method="put">
+    <error></error>
+    <label for="title">
+        <span>Titel</span>
+        <input type="text" placeholder="Titel" id="title" name="title" value="{{module.title}}" required>
+    </label>
+    <label for="description">
+        <span>Beschreibung</span>
+        <textarea id="description" placeholder="Beschreibung" name="description" required>{{module.description}}</textarea>
+    </label>
+    <container class="editor-container">
+        <div class="editor"></div>
+    </container>
+    <input type="hidden" id="content" name="content">
+    <label for="category_id">
+        <span>Fachgruppe</span>
+        <select id="category_id" name="category_id">
+            <!-- <option value="">Keine Fachgruppe</option> -->
+            {% for category in module_categories %}
+                <option value="{{ category.id }}" {% if module_category.id == module_category.id %}selected{% endif%}>{{ category.title }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label for="user_id">
+        <span>Autor*in</span>
+        <select id="user_id" name="user_id">
+            <option value="">Kein*e Autor*in</option>
+            {% for user in users %}
+                <option value="{{ user.id }}" {% if user.id == module.user_id %}selected{% endif%}>{{ user.first_name }} {{ user.last_name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label for="grade_flags">
+        <span>Klassen</span>
+        <div class="grade-checkboxes">
+            {% for grade in range(end=13) %}
+                <label class="checkbox-group">
+                    <span>{{ grade + 1 }}. Klasse:</span>
+                    <input type="checkbox" name="grades" value="{{ grade }}">
+                </label>
+            {% endfor %}
+        </div>
+    </label>
+    <label for="published">
+        <span>Öffentlich?</span>
+        <input type="checkbox" id="published" name="published" {% if module.published%}checked{% endif%}>
+    </label>
+    <label for="image">
+        <span>Thumbnail</span>
+        <input type="file" id="image" name="image" accept="image/png, image/jpeg, image/webp">
+    </label>
+    <input type="hidden" name="grade_flags" id="grade_flags" value="{{module.grade_flags}}">
+    <button type="submit">Änderungen speichern</button>
+</form>
+<script type="application/json" id="lesson-content">{{ module.content | safe }}</script>
+<script>
+    const editor = initQuillEditor($(".editor"), $(`script#lesson-content`).textContent)
+
+    const form = document.querySelector('.manage-content form');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleFormSubmit(form, {
+            loadingText: 'Speichern...',
+            beforeSubmit: (formData) => {
+                formData.set('content', getEditorContent(editor));
+            }
+        });
+    });
+    
+    const gradeFlagsInput = document.querySelector("input[name=grade_flags]");
+    const gradeCheckboxes = form.querySelectorAll('input[name="grades"]');
+    gradeCheckboxes.forEach(checkbox => {
+        const gradeBit = 2 ** parseInt(checkbox.value); // 2 to the power of the grade
+        checkbox.checked = (gradeFlagsInput.value & gradeBit) !== 0;
+
+        checkbox.addEventListener("change", e => {
+            let gradeFlags = 0;
+            gradeCheckboxes.forEach(cb => {
+                if (cb.checked) {
+                    gradeFlags |= 1 << parseInt(cb.value);
+                }
+            });
+            
+            gradeFlagsInput.value = gradeFlags;
+        });
+    });
+</script>
+{% endblock manage_content  %}
+
+
+<!-- edit module and principal content
+    pub image_id: Option<u32>, // banner bild
+    pub user_id: Option<u32>, // autor:in
+    pub category_id: Option<u32>, // fachgruppe
+
+    pub slug: String, // seo-freundliche-domain
+    pub title: String,
+    pub description: String,
+    pub content: String, // inhalt in markdown
+    pub grade_flags: u32, // bitfield von klassen
+
+    edit module_lessons 
+        pub id: u32,
+        pub module_id: Option<u32>, // parent modul
+        pub title: String,
+        pub position: u32,
+        
+        sections
+            pub id: u32,
+            pub module_lesson_id: u32, // parent modul stunde
+            pub title: String,
+            pub content: String,
+            pub duration: Option<u32>,
+            pub position: u32,
+            
+    edit module_materials
+        pub id: u32,
+        pub module_id: Option<u32>, // parent modul
+        pub file_id: u32,
+        
+        pub title: String,
+        pub material_type: String,
+        pub position: u32, -->

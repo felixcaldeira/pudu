@@ -4,6 +4,10 @@ use crate::config::Config;
 
 pub mod home;
 pub mod error;
+pub mod login;
+pub mod register;
+pub mod manage;
+pub mod contact;
 
 #[derive(Clone)]
 pub struct AppState {

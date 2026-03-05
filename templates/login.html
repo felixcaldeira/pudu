@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    main {
+        align-items: center;
+    }
+    section.login { 
+        display: flex;
+        max-width: 400px;
+        width: 100%;
+        gap: 1.5rem;
+        flex-direction: column;
+        align-items: center;
+        padding: 3rem 2rem;
+        border-radius: 1rem;
+        background-color: var(--accent);
+        color: var(--background);
+    }
+    section.login h1 {
+        color: var(--background);
+    }
+    section.login error.login-error {
+        background: var(--emphasis);
+        color: var(--background);
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+    section.login form, section.login form > section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        width: 100%;
+    }
+    section.login form > section {
+        gap: 0;
+    }
+    section.login form label {
+        font-size: 0.8rem;
+    }
+    section.login form input {
+        background: var(--background);
+        border: 2px solid var(--background);
+        margin-top: 0.3rem;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 1rem;
+        transition: border-color 0.2s ease;
+    }
+    section.login form input:focus, section.login form input:hover {
+        outline: none;
+        border-color: #fff;
+    }
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active{
+        -webkit-box-shadow: 0 0 0 30px white inset !important;
+    }
+    section.login form button {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+    }
+    section.login hr {
+        width: 100%;
+        height: 0px;
+        border: none;
+        border-top: 1px solid #bbb;
+    }
+    section.login a {
+        text-decoration: none;
+    }
+</style>
+{% endblock head %} 
+
+{% block content %}
+    <section class="login">
+        <h1>Anmelden</h1>
+
+        <form action="/login" method="post">
+            {% if error %}
+            <error class="login-error active">{{ error }}</error>
+            {% endif %}
+            
+            <section>
+                <label for="username">Benutzername</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username"
+                    required 
+                    autocomplete="username"
+                    placeholder="Geben Sie Ihren Nutzername an."
+                >
+            </section>
+
+            <section>
+                <label for="password">Passwort</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    required 
+                    autocomplete="current-password"
+                    placeholder="Geben Sie Ihr Passwort ein."
+                >
+            </section>
+
+            <button type="submit" class="login-button">
+                Anmelden
+            </button>
+        </form>
+        <hr>
+        <a class="unli" href="/">← Zurück zur Startseite</a>
+    </section>
+
+    <script>
+        const loginForm = document.querySelector('main section.login form');
+        const loginButton = loginForm.querySelector('.login-button');
+
+        loginForm.addEventListener('submit', function(e) {
+            loginButton.disabled = true;
+        });
+        window.addEventListener('load', function() {
+            loginForm.querySelector('input[name=username]').focus();
+        });
+    </script>
+{% endblock content %}

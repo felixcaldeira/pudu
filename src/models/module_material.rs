@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use chrono::{NaiveDateTime};
-use crate::handlers::error::AppError;
+use crate::AppError;
 use sqlx::FromRow;
 use crate::models::File;
 
@@ -109,6 +109,38 @@ impl ModuleMaterial {
 
         query_builder.push(" WHERE id = ").push_bind(id);
         query_builder.build().execute(pool).await?;
+
+        Ok(())
+    }
+
+    pub async fn batch_update_positions(
+        pool: &sqlx::MySqlPool,
+        updates: &[(u32, u32)], // Vec of (id, position)
+    ) -> Result<(), AppError> {
+        if updates.is_empty() {
+            return Ok(());
+        }
+
+        let ids: Vec<u32> = updates.iter().map(|(id, _)| *id).collect();
+        let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
+        
+        let mut case_stmt = String::from("CASE id ");
+        for (id, position) in updates {
+            case_stmt.push_str(&format!("WHEN {} THEN {} ", id, position));
+        }
+        case_stmt.push_str("END");
+
+        let query = format!(
+            "UPDATE module_materials SET position = {} WHERE id IN ({})",
+            case_stmt, placeholders
+        );
+
+        let mut query_builder = sqlx::query(&query);
+        for id in ids {
+            query_builder = query_builder.bind(id);
+        }
+
+        query_builder.execute(pool).await?;
 
         Ok(())
     }

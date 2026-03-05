@@ -1,7 +1,7 @@
 // src/models/module.rs
 use serde::{Deserialize, Serialize};
 use chrono::{NaiveDateTime};
-use crate::handlers::error::AppError;
+use crate::AppError;
 use sqlx::FromRow;
 use crate::models::ModuleMaterial;
 
@@ -15,7 +15,7 @@ pub struct Module {
     pub slug: String, // seo-freundliche-domain
     pub title: String,
     pub description: String,
-    pub content: String, // inhalt in markdown
+    pub content: Option<String>, // inhalt in markdown
     pub grade_flags: u32, // bitfield von klassen
 
     pub published: Option<i8>,
@@ -25,15 +25,15 @@ pub struct Module {
 
 #[derive(Debug)]
 pub struct ModuleCreate {
-    image_id: Option<u32>,
-    user_id: Option<u32>,
-    category_id: Option<u32>,
-    slug: String, 
-    title: String,
-    description: String,
-    content: String,
-    grade_flags: u32,
-    published: Option<i8>,
+    pub image_id: Option<u32>,
+    pub user_id: Option<u32>,
+    pub category_id: Option<u32>,
+    pub slug: String, 
+    pub title: String,
+    pub description: String,
+    pub content: Option<String>,
+    pub grade_flags: u32,
+    pub published: Option<i8>,
 }
 
 #[derive(Debug)]
@@ -43,6 +43,7 @@ pub struct ModuleUpdate {
     pub content: Option<String>,
     pub category_id: Option<u32>,
     pub image_id: Option<u32>,
+    pub user_id: Option<u32>,
     pub grade_flags: Option<u32>,
     pub published: Option<i8>,
 }
@@ -123,7 +124,7 @@ impl Module {
             data.description,
             data.content,
             data.grade_flags,
-            data.published
+            data.published,
         )
         .execute(pool)
         .await?;
@@ -163,11 +164,16 @@ impl Module {
         if let Some(image_id) = data.image_id {
             separated.push("image_id = ").push_bind_unseparated(image_id);
         }
+        if let Some(user_id) = data.user_id {
+            separated.push("user_id = ").push_bind_unseparated(user_id);
+        }
         if let Some(grade_flags) = data.grade_flags {
             separated.push("grade_flags = ").push_bind_unseparated(grade_flags);
         }
         if let Some(published) = data.published {
             separated.push("published = ").push_bind_unseparated(published);
+        } else {
+            separated.push("published = false");
         }
 
         query_builder.push(" WHERE id = ").push_bind(id);
@@ -175,15 +181,7 @@ impl Module {
 
         Ok(())
     }
-    // ModuleUpdate {
-    //     title: Some("New Title".to_string()),
-    //     published: Some(1),
-    //     description: None,
-    //     content: None,
-    //     category_id: None,
-    //     image_id: None,
-    //     grade_flags: None,
-    // }
+
     pub async fn delete(
         pool: &sqlx::MySqlPool,
         id: u32,

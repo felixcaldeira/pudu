@@ -1,15 +1,18 @@
 use axum::{
-    extract::State,
-    response::Html,
+    extract::{Request, State},
+    response::{Html},
 };
 use tera::Context;
 use crate::handlers::AppState;
-use crate::handlers::error::AppError;
-use crate::models::{User};
+use crate::AppError;
 use crate::TERA;
+use crate::helpers::base_context;
 
-pub async fn index(State(state): State<AppState>) -> Result<Html<String>, AppError> {
-    let mut context = Context::new();
+pub async fn get(
+    State(state): State<AppState>,
+    request: Request,
+) -> Result<Html<String>, AppError> {
+    let mut context = base_context(&request);
 
     context.insert("page_title", "Start");
     

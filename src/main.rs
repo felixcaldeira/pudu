@@ -1,6 +1,6 @@
 // main.rs
 use axum::{
-    routing::{get/*, post*/},
+    routing::{get, post, put, delete},
     Router,
     extract::DefaultBodyLimit,
     middleware
@@ -15,7 +15,10 @@ mod models;
 mod handlers;
 mod midware;
 mod templates;
+mod helpers;
 
+use models::UserFlags;
+use midware::auth::{intersects_flag, contains_flag};
 use config::Config;
 use handlers::error::handler_404;
 pub use handlers::error::AppError;
@@ -36,13 +39,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     
     let app = Router::new()
-        .route("/", get(handlers::home::index))
+        .route("/", get(handlers::home::get))
+        .route("/contact", get(handlers::contact::get))
         // .nest("/modules", Router::new()
         //     .route("/", get(handlers::module_list))
         //     .route("/:module_category", get(handlers::module_category))
-        //     .route("/:module_category/:slug", get(handlers::module_detail))
-        //     .route("/:module_category/:slug/lessons", get(handlers::module_lessons))
-        //     .route("/:module_category/:slug/materials", get(handlers::module_materialien))
+        //     .route("/:module_category/:module_slug", get(handlers::module_detail))
+        //     .route("/:module_category/:module_slug/lessons", get(handlers::module_lessons))
+        //     .route("/:module_category/:module_slug/materials", get(handlers::module_materialien))
         // )
 
         // .route("/authors", get(handlers::authors))
@@ -56,28 +60,109 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // .route("/datenschutz", get(handlers::contact::get))
         // .route("/impressum", get(handlers::contact::get))
         
-        // manage routes
-        // .nest("/manage", Router::new()
-        //     // Public manage routes
-        //     .route("/login", get(handlers::manage::show_login))
-        //     .route("/login", post(handlers::manage::login))
-        //     .route("/logout", post(handlers::manage::logout))
-        //     // Protected manage routes
-        //     .nest("/", Router::new()
-        //         .route("/", get(handlers::manage::dashboard))
-        //         .layer(middleware::from_fn_with_state(
-        //             state.clone(),
-        //             midware::auth::require_auth,
-        //         ))
-        //     )
-        // )
+        .nest("/login", Router::new() 
+            .route("/", get(handlers::login::get))
+            .route("/", post(handlers::login::post))
+            .layer(middleware::from_fn_with_state(
+                state.clone(), 
+                midware::auth::redirect_if_authenticated
+            ))
+        )
+        .nest("/register", Router::new() 
+            .route("/:nanoid", get(handlers::register::get))
+            .route("/:nanoid", post(handlers::register::post))
+            .layer(middleware::from_fn_with_state(
+                state.clone(), 
+                midware::auth::redirect_if_authenticated
+            ))
+        )
+        .route("/logout", post(handlers::login::logout))
+        .nest("/manage", Router::new()
+            // Protected manage routes
+            .route("/", get(handlers::manage::dashboard::get))
+            .nest("/users", Router::new()
+                .route("/", get(handlers::manage::users::get))
+                .route("/", post(handlers::manage::users::post))
+                .route("/:user_id", delete(handlers::manage::single_user::delete))
+                .layer(middleware::from_fn_with_state(
+                    state.clone(),
+                    |state, req, next| intersects_flag(state, req, next, UserFlags::MANAGE_USERS),
+                ))
+            )
+            .nest("/modules", Router::new()
+                .route("/", get(handlers::manage::module_categories::get))
+                .route("/", post(handlers::manage::module_categories::post))
+                .route("/:category_slug", put(handlers::manage::module_categories::put))
+                .route("/:category_slug", delete(handlers::manage::module_categories::delete))
+                .nest("/:category_slug", Router::new()
+                    .route("/", get(handlers::manage::modules::get))
+                    .route("/", post(handlers::manage::modules::post))
+                    .route("/:module_slug", get(handlers::manage::single_module::get))
+                    .route("/:module_slug", put(handlers::manage::single_module::put))
+                    .route("/:module_slug", delete(handlers::manage::single_module::delete))
+                    .route("/:module_slug/lessons", get(handlers::manage::single_module_lessons::get))
+                    .route("/:module_slug/lessons", post(handlers::manage::single_module_lessons::post))
+                    .route("/:module_slug/lessons/reorder", put(handlers::manage::single_module_lessons::reorder))
+                    .route("/:module_slug/lessons/:lesson_id", put(handlers::manage::single_lesson::put))
+                    .route("/:module_slug/lessons/:lesson_id", delete(handlers::manage::single_lesson::delete))
+                    .route("/:module_slug/lessons/:lesson_id/sections", post(handlers::manage::single_lesson_sections::post))
+                    .route("/:module_slug/lessons/:lesson_id/sections/reorder", put(handlers::manage::single_lesson_sections::reorder))
+                    .route("/:module_slug/lessons/:lesson_id/sections/:section_id", put(handlers::manage::single_section::put))
+                    .route("/:module_slug/lessons/:lesson_id/sections/:section_id", delete(handlers::manage::single_section::delete))
+                    .route("/:module_slug/materials", get(handlers::manage::single_module_materials::get))
+                    .route("/:module_slug/materials", post(handlers::manage::single_module_materials::post))
+                    .route("/:module_slug/materials/reorder", put(handlers::manage::single_module_materials::reorder))
+                    .route("/:module_slug/materials/:material_id", put(handlers::manage::single_module_materials::put))
+                    .route("/:module_slug/materials/:material_id", delete(handlers::manage::single_module_materials::delete))
+                )
+                .layer(middleware::from_fn_with_state(
+                    state.clone(),
+                    |state, req, next| intersects_flag(state, req, next, UserFlags::MANAGE_MODULES),
+                ))
+            )
+    //         .route("/users", get(handlers::manage::dashboard))
+    //         .route("/news", get(handlers::manage::dashboard))
+    //         .route("/workshops", get(handlers::manage::dashboard))
+            .layer(middleware::from_fn_with_state(
+                state.clone(),
+                midware::auth::require_auth,
+            ))
+            // .layer(middleware::from_fn_with_state(
+            //     state.clone(),
+            //     |state, req, next| intersects_flag(state, req, next, UserFlags::ADMIN),
+            // ))
+        )
+
+        .nest("/debug/errors", Router::new()
+            .route("/not-found", get(|| async {
+                Err::<(), _>(AppError::NotFound)
+            }))
+            .route("/unauthorized", get(|| async {
+                Err::<(), _>(AppError::Unauthorized)
+            }))
+            .route("/bad-request", get(|| async {
+                Err::<(), _>(AppError::BadRequest("Invalid input".into()))
+            }))
+            .route("/db", get(|| async {
+                Err::<(), _>(AppError::Database(
+                    sqlx::Error::RowNotFound
+                ))
+            }))
+            .route("/internal", get(|| async {
+                Err::<(), _>(AppError::Internal("Something exploded".into()))
+            }))
+            .layer(middleware::from_fn_with_state(
+                state.clone(),
+                |state, req, next| contains_flag(state, req, next, UserFlags::ADMIN),
+            ))
+        )
 
         .route_service("/robots.txt", ServeFile::new(Path::new(&config.static_dir).join("robots.txt")))
 
         // Static files
         .nest_service("/static", ServeDir::new(&config.static_dir))
         .nest_service("/files", ServeDir::new(&config.files_dir))
-        // .nest_service("/images", ...)
+        .nest_service("/images", ServeDir::new(&config.images_dir))
 
         // In your router:
         // .layer(middleware::from_fn_with_state(state.clone(), error_handler))
@@ -85,12 +170,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Middleware
         // Global middleware
+        .layer(CorsLayer::permissive())
+        .layer(DefaultBodyLimit::max(10 * 1024 * 1024)) // 10MB max
+        .layer(middleware::from_fn(midware::error_renderer))
+        .layer(middleware::from_fn_with_state(
+            state.clone(), 
+            midware::auth::clear_stale_auth_cookie
+        ))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             midware::auth::optional_auth,
         ))
-        .layer(CorsLayer::permissive())
-        .layer(DefaultBodyLimit::max(10 * 1024 * 1024)) // 10MB max
         .with_state(state);
     
     // Start server

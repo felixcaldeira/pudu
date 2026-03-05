@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    main {
+        align-items: center;
+    }
+    section.register { 
+        display: flex;
+        max-width: 600px;
+        width: 100%;
+        gap: 1.5rem;
+        flex-direction: column;
+        align-items: center;
+        padding: 3rem 2rem;
+        border-radius: 1rem;
+        background-color: var(--accent);
+        color: var(--background);
+    }
+    section.register h1 {
+        color: var(--background);
+    }
+    section.register error.register-error {
+        background: var(--emphasis);
+        color: var(--background);
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+    section.register form, section.register form > label {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    section.register form {
+        gap: 1.5rem;
+    }
+    section.register form label {
+        font-size: 0.8rem;
+    }
+    section.register form input {
+        background: var(--background);
+        border: 2px solid var(--background);
+        margin-top: 0.3rem;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 1rem;
+        transition: border-color 0.2s ease;
+    }
+    section.register form input:focus, section.register form input:hover {
+        outline: none;
+        border-color: #fff;
+    }
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active{
+        -webkit-box-shadow: 0 0 0 30px white inset !important;
+    }
+    section.register form button {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+    }
+    section.register hr {
+        width: 100%;
+        height: 0px;
+        border: none;
+        border-top: 1px solid #bbb;
+    }
+    section.register a {
+        text-decoration: none;
+    }
+</style>
+{% endblock head %} 
+
+{% block content %}
+    <section class="register">
+        <h1>Konto erstellen</h1>
+
+        <form action="/register/{{pending_user.nanoid}}" method="post">
+            {% if error %}
+            <error class="register-error active">{{ error }}</error>
+            {% endif %}
+            <label for="email">
+                <span>E-Mail Adresse</span>
+                <input type="text" disabled placeholder="E-Mail Adresse" id="email" name="email" value="{{pending_user.email}}">
+            </label>
+            <label for="username">
+                <span>Benutzername</span>
+                <input type="text" placeholder="Benutzername" id="username" name="username" required>
+            </label>
+            <label for="academic_title">
+                <span>Akademischer Grad</span>
+                <input type="text" placeholder="Akademischer Grad" id="academic_title" name="academic_title">
+            </label>
+            <label for="first_name">
+                <span>Vorname</span>
+                <input type="text" placeholder="Vorname" id="first_name" name="first_name" required>
+            </label>
+            <label for="last_name">
+                <span>Nachname</span>
+                <input type="text" placeholder="Nachname" id="last_name" name="last_name" required>
+            </label>
+            <label for="password">
+                <span>Password</span>
+                <input type="password" placeholder="Password" autocomplete="current-password" id="password" name="password" required>
+            </label>
+            <button type="submit" class="register-button">Registrieren</button>
+        </form>
+        <hr>
+        <a class="unli" href="/">← Zurück zur Startseite</a>
+    </section>
+
+    <script>
+        const registerForm = document.querySelector('main section.register form');
+        const registerButton = registerForm.querySelector('.register-button');
+
+        registerForm.addEventListener('submit', function(e) {
+            registerButton.disabled = true;
+        });
+        window.addEventListener('load', function() {
+            registerForm.querySelector('input[name=username]').focus();
+        });
+    </script>
+{% endblock content %}

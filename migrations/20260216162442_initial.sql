@@ -2,7 +2,8 @@
 CREATE TABLE images (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nanoid CHAR(12) UNIQUE NOT NULL,
-    mime_type VARCHAR(100),
+    mime_type VARCHAR(100) NOT NULL,
+    ext VARCHAR(100) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -40,7 +41,7 @@ CREATE TABLE articles (
     slug VARCHAR(255) UNIQUE NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    content LONGTEXT NOT NULL,
+    content LONGTEXT,
     published BOOLEAN DEFAULT false,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -75,7 +76,7 @@ CREATE TABLE modules (
     slug VARCHAR(255) UNIQUE NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    content TEXT NOT NULL, -- in markdown
+    content LONGTEXT, -- in markdown
     grade_flags SMALLINT UNSIGNED NOT NULL DEFAULT 0, -- grade which this module is meant for, bitfield
     published BOOLEAN DEFAULT false,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -87,7 +88,7 @@ CREATE TABLE modules (
 
     FOREIGN KEY (category_id)
         REFERENCES module_categories(id)
-        ON DELETE SET NULL,
+        ON DELETE CASCADE,
 
     FOREIGN KEY (image_id)
         REFERENCES images(id)
@@ -101,7 +102,6 @@ CREATE TABLE module_lessons (
     title VARCHAR(255) NOT NULL,
     position INT UNSIGNED NOT NULL, -- e.g., "1", "2", "3" or "13", "14"
 
-    UNIQUE (module_id, position),
     INDEX idx_module_position (module_id, position),
 
     FOREIGN KEY (module_id) 
@@ -115,10 +115,9 @@ CREATE TABLE module_lesson_sections (
     module_lesson_id INT UNSIGNED NOT NULL,
     title VARCHAR(255) NOT NULL,
     duration INT UNSIGNED DEFAULT NULL,
-    content TEXT NOT NULL, -- text content of each individual lesson in markdown
+    content LONGTEXT, -- text content of each individual lesson in markdown
     position INT UNSIGNED NOT NULL, -- e.g., "1", "2", "3" or "13", "14"
 
-    UNIQUE (module_lesson_id, position),
     INDEX idx_lesson_position (module_lesson_id, position),
 
     FOREIGN KEY (module_lesson_id) 
@@ -134,8 +133,6 @@ CREATE TABLE module_materials (
     title VARCHAR(255) NOT NULL,
     material_type VARCHAR(255) NOT NULL,
     position INT UNSIGNED NOT NULL,
-    
-    UNIQUE (module_id, position),
 
     FOREIGN KEY (file_id)
         REFERENCES files(id)
@@ -152,7 +149,7 @@ CREATE TABLE newsletters (
     image_id VARCHAR(500),
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    content LONGTEXT NOT NULL,
+    content LONGTEXT,
     published BOOLEAN DEFAULT false,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -165,7 +162,7 @@ CREATE TABLE workshops (
     slug VARCHAR(255) UNIQUE NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    content LONGTEXT NOT NULL,
+    content LONGTEXT,
     workshop_date DATETIME NOT NULL,
     published BOOLEAN DEFAULT false,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

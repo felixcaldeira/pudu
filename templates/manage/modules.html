@@ -1,0 +1,278 @@
+{% extends "manage/dashboard-base.html" %}
+
+{% block manage_head %}
+<style>
+    .manage-header {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    .manage-popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .manage-popup form {
+        display: none;
+        flex-direction: column;
+        gap: 1rem;
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .manage-popup form error {
+        display: none;
+        background: var(--emphasis);
+        color: var(--background);
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+    }
+    .manage-popup form error.active {
+        display: block;
+    }
+    .manage-popup form label {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+    }
+    .manage-popup .grade-checkboxes {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin-top: 0.3rem;
+        gap: 0rem 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background-color: #ddd;
+    }
+    .manage-popup .checkbox-group {
+        display: inline;
+    }
+    .manage-popup form input[type=text],
+    .manage-popup form textarea,
+    .manage-popup form select {
+        background: var(--background);
+        width: 100%;
+        border: 2px solid var(--background);
+        margin-top: 0.3rem;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 1rem;
+        transition: border-color 0.2s ease;
+        resize: vertical;
+    }
+    .manage-popup form textarea {
+        min-height: 100px;
+    }
+    .manage-popup form input:focus, .manage-popup form input:hover,
+    .manage-popup form textarea:focus, .manage-popup form textarea:hover,
+    .manage-popup form select:focus, .manage-popup form select:hover {
+        outline: none;
+        border-color: #fff;
+    }
+    .manage-content button[class="cancel"] {
+        background: var(--text);
+        color: var(--background);
+    }
+    .manage-content button[class="delete"] {
+        background: var(--emphasis);
+        color: var(--background);
+    }
+    body:has(.manage-popup form.active) {
+        overflow: hidden;
+    }
+    .manage-popup:has(form.active) {
+        display: flex;
+    }
+    .manage-popup form.active {
+        display: flex;
+    }
+    .manage-content .modules {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .manage-content .module {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    .manage-content .module-image {
+        background-image: url("/static/symbols/image-missing.svg");
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 7rem;
+        aspect-ratio: 1 / 1;
+        border-radius: 1rem;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+    .manage-content .module-image img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+    }
+    .manage-content .module-details {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        flex-grow: 1;
+    }
+    .manage-content .module-details h3 {
+        margin: 0 0 0.5rem 0;
+    }
+    .manage-content .module-details p {
+        margin: 0.2rem 0;
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    .manage-content .module-tools {
+        display: flex;
+        gap: 0.5rem;
+        align-self: flex-start;
+        flex-wrap: wrap;
+    }
+    .module-category-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        background: var(--background);
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        margin-top: 0.3rem;
+    }
+</style>
+{% endblock manage_head %}
+
+{% block manage_content %}
+<span class="manage-location"><a href="/manage">Dashboard</a> / <a href="/manage/modules">Unterrichtseinheiten</a> / <a href="/manage/modules/{{module_category.slug}}">{{module_category.title}}</a></span>
+<section class="manage-header">
+    <h2>Unterrichtsmaterialien in {{module_category.title}}</h2>
+    <button data-type="create">Erstellen</button>
+</section>
+<section class="modules">
+    {% for module in modules %}
+        <div class="module">
+            <div class="module-image">
+                {% if module.image_id %}
+                    {% set image = images[module.image_id] %}
+                    <img src="/images/{{ image.nanoid }}.{{ image.ext }}" alt="{{ module.title }}">
+                {% endif %}
+            </div>
+            <div class="module-details {% if module.published %}published{% endif %}">
+                <h3>{{ module.title }}</h3>
+                <p>{{ module.description }}</p>
+                <p>Erstellt am {{ module.created_at | date(format="%d.%m.%Y um %H:%M") }}</p>
+            </div>
+            <div class="module-tools">
+                <a href="/manage/modules/{{module_category.slug}}/{{ module.slug }}"><button>Bearbeiten</button></a>
+                <button class="delete" data-type="delete" data-slug="{{ module.slug }}">Löschen</button>
+            </div>
+        </div>
+    {% endfor %}
+</section>
+
+<div class="manage-popup">
+    <form data-handle-submit action="/manage/modules/{{module_category.slug}}" method="post" enctype="multipart/form-data">
+        <error></error>
+        <label for="title">
+            <span>Titel</span>
+            <input type="text" placeholder="Titel" id="title" name="title" required>
+        </label>
+        <label for="description">
+            <span>Beschreibung</span>
+            <textarea id="description" placeholder="Beschreibung" name="description" required></textarea>
+        </label>
+        <label for="category_id">
+            <span>Fachgruppe</span>
+            <select id="category_id" name="category_id">
+                <!-- <option value="">Keine Fachgruppe</option> -->
+                {% for category in module_categories %}
+                    <option value="{{ category.id }}" {% if category.id == module_category.id %}selected{% endif%}>{{ category.title }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label for="grade_flags">
+            <span>Klassen</span>
+            <div class="grade-checkboxes">
+                {% for grade in range(end=13) %}
+                    <label class="checkbox-group">
+                        <span>{{ grade + 1 }}. Klasse:</span>
+                        <input type="checkbox" name="grades" value="{{ grade }}">
+                    </label>
+                {% endfor %}
+            </div>
+        </label>
+        <label for="published">
+            <span>Öffentlich?</span>
+            <input type="checkbox" id="published" name="published" checked>
+        </label>
+        <label for="image">
+            <span>Thumbnail</span>
+            <input type="file" id="image" name="image" accept="image/png, image/jpeg, image/webp">
+        </label>
+        <input type="hidden" name="grade_flags" id="grade_flags">
+        <button type="submit">Erstellen</button>
+        <button class="cancel" type="button" data-type="cancel">Abbrechen</button>
+    </form>
+    
+    <form data-handle-submit action="/manage/modules/!category_slug/!slug" method="delete">
+        <error></error>
+        <p>Bist du sicher, dass du diese Unterrichtseinheit löschen möchtest?</p>
+        <button class="delete" type="submit">Löschen</button>
+        <button class="cancel" type="button" data-type="cancel">Abbrechen</button>
+    </form>
+</div>
+
+<script>
+    // Create button
+    let createForm = document.querySelector(".manage-popup form[method=post]");
+    let createButton = document.querySelector(".manage-content button[data-type=create]");
+    createButton.addEventListener("click", () => createForm.classList.add("active"));
+
+    // Delete buttons
+    let deleteForm = document.querySelector(".manage-popup form[method=delete]");
+    let deleteButtons = document.querySelectorAll(".modules button[data-type=delete]");
+    deleteButtons.forEach(button => button.addEventListener("click", () => {
+        const slug = button.dataset.slug;
+        deleteForm.action = `/manage/modules/{{module_category.slug}}/${slug}`;
+        deleteForm.classList.add("active");
+    }));
+
+    // Cancel buttons
+    let cancelButtons = document.querySelectorAll(".manage-popup button[data-type=cancel]");
+    cancelButtons.forEach(button => button.addEventListener("click", () => {
+        let activeForm = document.querySelector(".manage-popup form.active");
+        activeForm.reset();
+        activeForm.classList.remove("active");
+    }));
+
+    const gradeCheckboxes = createForm.querySelectorAll('input[name="grades"]');
+    
+    gradeCheckboxes.forEach(checkbox => checkbox.addEventListener("change", e => {
+        let gradeFlags = 0;
+        gradeCheckboxes.forEach(cb => {
+            if (cb.checked) {
+                gradeFlags |= 1 << parseInt(cb.value);
+            }
+        });
+        
+        document.querySelector("input[name=grade_flags]").value = gradeFlags;
+    }));
+</script>
+{% endblock manage_content %}

@@ -1,7 +1,7 @@
 // src/models/file.rs
 use serde::{Deserialize, Serialize};
 use chrono::{NaiveDateTime, Utc};
-use crate::handlers::error::AppError;
+use crate::AppError;
 use sqlx::FromRow;
 use std::env;
 use tokio::fs;

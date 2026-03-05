@@ -1,11 +1,16 @@
 pub mod image;
 pub mod file;
 pub mod user;
+pub mod pending_user;
+pub mod user_flags;
 pub mod article;
 
 pub use image::Image;
 pub use file::File;
 pub use user::User;
+pub use pending_user::PendingUser;
+pub use user_flags::UserFlags;
+pub use user::LoginRequest;
 pub use article::Article;
 
 pub mod module_category;

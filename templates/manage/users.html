@@ -1,0 +1,196 @@
+{% extends "manage/dashboard-base.html" %}
+
+{% block manage_head %}
+<style>
+    .manage-header {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    .manage-popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .manage-popup form {
+        display: none;
+        flex-direction: column;
+        gap: 1rem;
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .manage-popup form error {
+        display: none;
+        background: var(--emphasis);
+        color: var(--background);
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+    }
+    .manage-popup form error.active {
+        display: block;
+    }
+    .manage-popup form label {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+    }
+    .manage-popup .grade-checkboxes {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin-top: 0.3rem;
+        gap: 0rem 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        background-color: #ddd;
+    }
+    .manage-popup .checkbox-group {
+        display: inline;
+    }
+    .manage-popup form input[type=text],
+    .manage-popup form textarea,
+    .manage-popup form select {
+        background: var(--background);
+        width: 100%;
+        border: 2px solid var(--background);
+        margin-top: 0.3rem;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 1rem;
+        transition: border-color 0.2s ease;
+        resize: vertical;
+    }
+    .manage-popup form textarea {
+        min-height: 100px;
+    }
+    .manage-popup form input:focus, .manage-popup form input:hover,
+    .manage-popup form textarea:focus, .manage-popup form textarea:hover,
+    .manage-popup form select:focus, .manage-popup form select:hover {
+        outline: none;
+        border-color: #fff;
+    }
+    .manage-content button[class="cancel"] {
+        background: var(--text);
+        color: var(--background);
+    }
+    .manage-content button[class="delete"] {
+        background: var(--emphasis);
+        color: var(--background);
+    }
+    body:has(.manage-popup form.active) {
+        overflow: hidden;
+    }
+    .manage-popup:has(form.active) {
+        display: flex;
+    }
+    .manage-popup form.active {
+        display: flex;
+    }
+</style>
+{% endblock manage_head %}
+
+{% block manage_content %}
+<span class="manage-location"><a href="/manage">Dashboard</a> / <a href="/manage/users">Benutzer</a></span>
+<section class="manage-header">
+    <h2>Benutzer</h2>
+    <button data-type="create">Erstellen</button>
+</section>
+<section class="users">
+    {% for user in users %}
+        <div class="user">
+            <div class="user-image">
+                {% if user.image_id %}
+                    {% set image = images[user.image_id] %}
+                    <img src="/images/{{ image.nanoid }}.{{ image.ext }}" alt="{{ user.username }}">
+                {% endif %}
+            </div>
+            <div class="user-details">
+                <h3>{{ user.academic_title }} {{user.first_name}} {{user.last_name}}</h3>
+                <p>{{ user.username}}</p>
+                <p>Erstellt am {{ user.created_at | date(format="%d.%m.%Y um %H:%M") }}</p>
+            </div>
+            <div class="user-tools">
+                <a href="/manage/users/{{user.id}}"><button>Bearbeiten</button></a>
+                <button class="delete" data-type="delete" data-id="{{ user.id }}">Löschen</button>
+            </div>
+        </div>
+    {% endfor %}
+</section>
+
+<div class="manage-popup">
+    <form data-handle-submit action="/manage/users" method="post" enctype="multipart/form-data">
+        <error></error>
+        <!-- <label for="username">
+            <span>Benutzername</span>
+            <input type="text" placeholder="Benutzername" id="username" name="username" required>
+        </label>
+        <label for="academic_title">
+            <span>Akademischer Grad</span>
+            <input type="text" placeholder="Akademischer Grad" id="academic_title" name="academic_title">
+        </label>
+        <label for="first_name">
+            <span>Vorname</span>
+            <input type="text" placeholder="Vorname" id="first_name" name="first_name" required>
+        </label>
+        <label for="last_name">
+            <span>Nachname</span>
+            <input type="text" placeholder="Nachname" id="last_name" name="last_name" required>
+        </label> -->
+        <!-- <label for="user_flags">
+            <span>Rechte</span>
+            <div class="user-checkboxes">
+                <label class="checkbox-group">
+                    <span></span>
+                    <input type="checkbox" name="flags" value="">
+                </label>
+            </div>
+        </label> -->
+        <label for="email">
+            <span>E-Mail Adresse</span>
+            <input type="text" placeholder="E-Mail Adresse" id="email" name="email" required>
+        </label>
+        <button type="submit">Erstellen</button>
+        <button class="cancel" type="button" data-type="cancel">Abbrechen</button>
+    </form>
+    
+    <form data-handle-submit action="/manage/users/!id" method="delete">
+        <error></error>
+        <p>Bist du sicher, dass du diesen Benutzer löschen möchtest?</p>
+        <button class="delete" type="submit">Löschen</button>
+        <button class="cancel" type="button" data-type="cancel">Abbrechen</button>
+    </form>
+</div>
+<script>
+    let createForm = document.querySelector(".manage-popup form[method=post]");
+    let createButton = document.querySelector(".manage-content button[data-type=create]");
+    createButton.addEventListener("click", e => createForm.classList.add("active"));
+    let deleteForm = document.querySelector(".manage-popup form[method=delete]")
+    let deleteButtons = document.querySelectorAll(".users button[data-type=delete]");
+    deleteButtons.forEach(button => button.addEventListener("click", (e) => {
+        deleteForm.action = `/manage/users/${button.dataset.id}`;
+        deleteForm.classList.add("active");
+    }));
+    let cancelButtons = document.querySelectorAll(".manage-popup button[data-type=cancel]");
+    cancelButtons.forEach(button => button.addEventListener("click", (e) => {
+        let activeForm = document.querySelector(".manage-popup form.active");
+        activeForm.reset();
+        activeForm.classList.remove("active");
+    }));
+</script>
+{% endblock manage_content %}

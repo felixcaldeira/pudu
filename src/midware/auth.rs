@@ -1,92 +1,184 @@
 // src/middleware/auth.rs
 use axum::{
     extract::{Request, State},
-    http::{header, StatusCode},
+    http::{header, HeaderValue},
     middleware::Next,
     response::{Redirect, Response, IntoResponse},
 };
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
+use tracing::warn;
 use crate::handlers::AppState;
+use crate::models::{User, UserFlags};
+use crate::AppError;
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
-    pub sub: String, // User ID
-    pub username: String,
+    pub sub: String,
     pub exp: usize,
+    pub iat: usize,  
 }
 
-// Middleware that requires authentication
 pub async fn require_auth(
     State(state): State<AppState>,
     mut request: Request,
     next: Next,
-) -> Result<Response, StatusCode> {
-    // Try to get JWT from cookie
-    let auth_cookie = request
-        .headers()
-        .get(header::COOKIE)
-        .and_then(|cookie| cookie.to_str().ok())
-        .and_then(|cookies| {
-            cookies
-                .split(';')
-                .find(|cookie| cookie.trim().starts_with("auth_token="))
-                .map(|cookie| cookie.trim().strip_prefix("auth_token=").unwrap_or(""))
-        });
-
-    if let Some(token) = auth_cookie {
-        // Validate JWT token
-        let decoding_key = DecodingKey::from_secret(state.config.jwt_secret.as_bytes());
-        let validation = Validation::default();
-        
-        match decode::<Claims>(token, &decoding_key, &validation) {
-            Ok(token_data) => {
-                // Add user info to request extensions
-                request.extensions_mut().insert(token_data.claims);
-                Ok(next.run(request).await)
-            }
-            Err(_) => {
-                // Invalid token - redirect to login
-                Ok(Redirect::to("/admin/login").into_response())
-            }
-        }
-    } else {
-        // No token - redirect to login
-        Ok(Redirect::to("/admin/login").into_response())
-    }
+) -> Result<Response, AppError> {
+    let token = extract_auth_token(&request)
+        .ok_or(AppError::Unauthorized)?;
+    let claims = verify_token(token, state.config.jwt_secret.as_bytes())
+        .map_err(|_| AppError::Unauthorized)?;
+    let user_id: u32 = claims.sub
+        .parse()
+        .map_err(|_| AppError::Unauthorized)?;
+    let user = User::find_by_id(&state.db, user_id)
+        .await?
+        .ok_or(AppError::Unauthorized)?;
+    request.extensions_mut().insert(Some(user));
+    Ok(next.run(request).await)
 }
 
-// Optional auth middleware (doesn't redirect, just adds user info if available)
 pub async fn optional_auth(
     State(state): State<AppState>,
     mut request: Request,
     next: Next,
 ) -> Response {
-    // Try to get JWT from cookie
-    let auth_cookie = request
-        .headers()
-        .get(header::COOKIE)
-        .and_then(|cookie| cookie.to_str().ok())
-        .and_then(|cookies| {
-            cookies
-                .split(';')
-                .find(|cookie| cookie.trim().starts_with("auth_token="))
-                .map(|cookie| cookie.trim().strip_prefix("auth_token=").unwrap_or(""))
-        });
-
-    if let Some(token) = auth_cookie {
-        let decoding_key = DecodingKey::from_secret(state.config.jwt_secret.as_bytes());
-        let validation = Validation::default();
-        
-        if let Ok(token_data) = decode::<Claims>(token, &decoding_key, &validation) {
-            request.extensions_mut().insert(token_data.claims);
+    let mut user: Option<User> = None;
+    let mut should_clear = false;
+    if let Some(token) = extract_auth_token(&request) {
+        match verify_token(token, state.config.jwt_secret.as_bytes()) {
+            Ok(claims) => {
+                match claims.sub.parse::<u32>() {
+                    Ok(user_id) => {
+                        match User::find_by_id(&state.db, user_id).await {
+                            Ok(Some(u)) => user = Some(u),
+                            _ => should_clear = true, // user deleted
+                        }
+                    }
+                    Err(_) => should_clear = true,
+                }
+            }
+            Err(_) => {
+                warn!("Invalid token");
+                should_clear = true;
+            }
         }
     }
-    
-    next.run(request).await
+    request.extensions_mut().insert(user);
+    let mut response = next.run(request).await;
+    if should_clear {
+        response.headers_mut().insert(
+            header::SET_COOKIE,
+            "auth_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"
+                .parse()
+                .unwrap(),
+        );
+    }
+    response
 }
 
-// Helper to extract user from request
-pub fn get_user_from_request(request: &Request) -> Option<&Claims> {
-    request.extensions().get::<Claims>()
+pub async fn redirect_if_authenticated(
+    State(state): State<AppState>,
+    request: Request,
+    next: Next,
+) -> Result<Response, AppError> {
+    if let Some(token) = extract_auth_token(&request) {
+        if let Ok(claims) = verify_token(token, state.config.jwt_secret.as_bytes()) {
+            let user_id: u32 = claims.sub
+                .parse()
+                .map_err(|_| AppError::Unauthorized)?;
+            if let Ok(Some(_user)) = User::find_by_id(&state.db, user_id).await {
+                return Ok(Redirect::to("/manage").into_response());
+            }
+        }
+    }
+    Ok(next.run(request).await)
+}
+
+pub async fn clear_stale_auth_cookie(
+    State(state): State<AppState>,
+    request: Request,
+    next: Next,
+) -> Response {
+    let had_token = extract_auth_token(&request).is_some();
+    
+    // pull this out BEFORE consuming the request
+    let user_from_request = request.extensions().get::<Option<User>>().cloned();
+    
+    let mut response = next.run(request).await;
+
+    if had_token {
+        let is_stale = matches!(user_from_request, None | Some(None));
+        if is_stale {
+            response.headers_mut().insert(
+                header::SET_COOKIE,
+                HeaderValue::from_static(
+                    "auth_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Secure"
+                ),
+            );
+        }
+    }
+
+    response
+}
+
+
+pub async fn intersects_flag(
+    State(state): State<AppState>,
+    request: Request,
+    next: Next,
+    flag: UserFlags,
+) -> Result<Response, AppError> {
+    let user = request
+        .extensions()
+        .get::<Option<User>>()
+        .and_then(|u| u.as_ref())
+        .ok_or(AppError::Unauthorized)?;
+
+    if !user.flags.intersects(flag) {
+        return Err(AppError::Unauthorized);
+    }
+
+    Ok(next.run(request).await)
+}
+pub async fn contains_flag(
+    State(state): State<AppState>,
+    request: Request,
+    next: Next,
+    flag: UserFlags,
+) -> Result<Response, AppError> {
+    let user = request
+        .extensions()
+        .get::<Option<User>>()
+        .and_then(|u| u.as_ref())
+        .ok_or(AppError::Unauthorized)?;
+
+    if !user.flags.contains(flag) {
+        return Err(AppError::Unauthorized);
+    }
+
+    Ok(next.run(request).await)
+}
+
+fn extract_auth_token(request: &Request) -> Option<&str> {
+    request
+        .headers()
+        .get(header::COOKIE)?
+        .to_str()
+        .ok()?
+        .split(';')
+        .find(|c| c.trim().starts_with("auth_token="))?
+        .trim()
+        .strip_prefix("auth_token=")
+}
+
+fn verify_token(token: &str, secret: &[u8]) -> Result<Claims, ()> {
+    decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(secret),
+        &Validation::default()
+    )
+    .map(|data| data.claims)
+    .map_err(|_| ())
 }

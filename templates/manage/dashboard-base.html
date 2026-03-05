@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    main {
+        flex-direction: row;
+        gap: 1rem;
+
+    }
+    .manage-location a {
+        color: var(--accent);
+        
+    }
+    section.manage-content {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 1.5rem;
+    }
+    section.manage-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem 2rem;
+        border-radius: 1rem;
+        /* text-transform: uppercase; */
+        /* align-items: center; */
+        text-align: center;
+        background: var(--accent);
+        color: var(--background);
+    }
+    .manage-nav a {
+        font-weight: 600;
+    }
+    .manage-nav a:not(:first-child)::before {
+        content: "";
+        display: block;
+        position: relative;
+        width: 100%;
+        height: 1px;
+        background-color: rgba(0, 0, 0, .3);
+        margin-bottom: 0.5rem; /* spacing below the line */
+    }
+    .manage-nav form {
+        padding-top: 1rem;
+    }
+    .editor-container {
+        display: flex;
+        flex-direction: column;
+    }
+    .editor-container > * {
+        background-color: white ;
+    }
+    .editor-container .ql-toolbar {
+        border-radius: 1rem 1rem 0rem 0rem;
+    }
+    .editor-container .ql-picker-options {
+        border-radius: 1rem;
+    }
+    .editor {
+        border-radius: 0rem 0rem 1rem 1rem;
+    }
+</style>
+
+{% block manage_head  %}
+{% endblock manage_head  %}
+
+{% endblock head %}
+
+{% block content %}
+    <section class="manage-nav">
+        {% if user and has_flag(flags=user.flags, bit=4) %}
+            <a href="/manage/articles">Artikel (TODO)</a>
+        {% endif %}
+        {% if user and has_flag(flags=user.flags, bit=64) %}
+            <a href="/manage/users">Benutzer</a>
+        {% endif %}
+        {% if user and has_flag(flags=user.flags, bit=32) %}
+            <a href="/manage/images">Bilder (TODO)</a>
+        {% endif %}
+        {% if user and has_flag(flags=user.flags, bit=16) %}
+            <a href="/manage/files">Dateien (TODO)</a>
+        {% endif %}
+        {% if user and has_flag(flags=user.flags, bit=1) %}
+            <a href="/manage/newsletter">Newsletter (TODO)</a>
+        {% endif %}
+        {% if user and has_flag(flags=user.flags, bit=2) %}
+            <a href="/manage/modules">Unterrichtseinheiten</a>
+        {% endif %}
+        {% if user and has_flag(flags=user.flags, bit=8) %}
+            <a href="/manage/workshops">Workshops (TODO)</a>
+        {% endif %}
+        <a href="/manage/self">Einstellungen</a>
+        <form method="post" action="/logout" style="display: inline;">
+            <button type="submit" class="logout-btn">Abmelden</button>
+        </form>
+    </section>
+    <section class="manage-content">
+        {% block manage_content  %}
+        {% endblock manage_content  %}
+    </section>
+{% endblock content %}

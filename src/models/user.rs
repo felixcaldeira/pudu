@@ -3,9 +3,10 @@ use serde::{Deserialize, Serialize};
 use chrono::{NaiveDateTime};
 use sqlx::FromRow;
 use bcrypt::{hash, verify, DEFAULT_COST};
-use crate::handlers::error::AppError;
+use crate::AppError;
+use crate::UserFlags;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Clone, Debug, Serialize, Deserialize, FromRow)]
 pub struct User {
     pub id: u32,
     pub image_id: Option<u32>,
@@ -13,11 +14,25 @@ pub struct User {
     pub academic_title: Option<String>,
     pub first_name: String,
     pub last_name: String,
-    pub flags: Option<u32>,
+    
+    #[sqlx(try_from = "u32")]
+    pub flags: UserFlags,
+
     pub email: String,
     pub password_hash: String,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Debug)]
+pub struct UserCreate {
+    pub username: String, 
+    pub email: String, 
+    pub password: String,
+    pub academic_title: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub flags: UserFlags
 }
 
 #[derive(Debug)]
@@ -26,20 +41,29 @@ pub struct UserUpdate {
     pub academic_title: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub flags: Option<u32>,
+    pub flags: Option<UserFlags>,
     pub email: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}
+
 impl User {
-    // pub async fn find_list(pool: &sqlx::MySqlPool, limit: u32, page, order) -> Result<Option<Self>, sqlx::Error> {
-    //     sqlx::query_as!(
-    //         User,
-    //         "SELECT * FROM users WHERE username = ?",
-    //         username
-    //     )
-    //     .fetch_optional(pool)
-    //     .await
-    // }
+    pub async fn find_all(
+        pool: &sqlx::MySqlPool
+    ) -> Result<Vec<Self>, AppError> {
+        Ok(
+            sqlx::query_as!(
+                User,
+                "SELECT * FROM users",
+            )
+            .fetch_all(pool)
+            .await?
+        )
+    }
 
     pub async fn find_by_username(pool: &sqlx::MySqlPool, username: &str) -> Result<Option<Self>, AppError> {
         Ok(
@@ -47,6 +71,18 @@ impl User {
                 User,
                 "SELECT * FROM users WHERE username = ?",
                 username
+            )
+            .fetch_optional(pool)
+            .await?
+        )
+    }
+
+    pub async fn find_by_email(pool: &sqlx::MySqlPool, email: &str) -> Result<Option<Self>, AppError> {
+        Ok(
+            sqlx::query_as!(
+                User,
+                "SELECT * FROM users WHERE email = ?",
+                email
             )
             .fetch_optional(pool)
             .await?
@@ -67,26 +103,20 @@ impl User {
 
     pub async fn create(
         pool: &sqlx::MySqlPool, 
-        username: &str, 
-        email: &str, 
-        password: &str,
-        academic_title: &str,
-        first_name: &str,
-        last_name: &str,
-        flags: u32,
+        data: UserCreate,
     ) -> Result<u32, AppError> {
-        let password_hash = hash(password, DEFAULT_COST)
+        let password_hash = hash(data.password, DEFAULT_COST)
             .map_err(|_| AppError::Internal("Failed to hash password".into()))?;
 
         let result = sqlx::query!(
             "INSERT INTO users (username, email, password_hash, academic_title, first_name, last_name, flags) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            username,
-            email,
+            data.username,
+            data.email,
             password_hash,
-            academic_title,
-            first_name,
-            last_name,
-            flags,
+            data.academic_title,
+            data.first_name,
+            data.last_name,
+            data.flags.bits(),
         )
         .execute(pool)
         .await?;
@@ -164,7 +194,7 @@ impl User {
             separated.push("last_name = ").push_bind_unseparated(last_name);
         }
         if let Some(flags) = data.flags {
-            separated.push("flags = ").push_bind_unseparated(flags);
+            separated.push("flags = ").push_bind_unseparated(flags.bits());
         }
         if let Some(email) = data.email {
             separated.push("email = ").push_bind_unseparated(email);
@@ -178,6 +208,10 @@ impl User {
 
     pub fn verify_password(&self, password: &str) -> bool {
         verify(password, &self.password_hash).unwrap_or(false)
+    }
+
+    pub fn dummy_verify() {
+        let _ = verify("dummy", "$2b$12$invalidhashfortimingprotection000000000000000000000000000");
     }
 
     pub async fn delete(
