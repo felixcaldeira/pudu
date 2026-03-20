@@ -1,4 +1,4 @@
-{% extends "manage/dashboard-base.html" %}
+{% extends "manage/dashboard_base.html" %}
 
 {% block manage_head %}
 <style>
@@ -102,6 +102,42 @@
     .manage-popup form.active {
         display: flex;
     }
+    .manage-content .user {
+        display: flex;
+        gap: 1rem;
+    }
+    .manage-content .user-image {
+        background-image: url("/static/symbols/image-missing.svg");
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 7rem;
+        flex-shrink: 0;
+        aspect-ratio: 1 / 1;
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+    .manage-content .user-image img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+    }
+    .manage-content .user-details {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .manage-content .user-tools {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-self: flex-start;
+        justify-content: flex-end;
+        margin-left: auto;
+    }
+    .manage-content .user-date {
+        opacity: 0.7;
+    }
 </style>
 {% endblock manage_head %}
 
@@ -122,8 +158,8 @@
             </div>
             <div class="user-details">
                 <h3>{{ user.academic_title }} {{user.first_name}} {{user.last_name}}</h3>
-                <p>{{ user.username}}</p>
-                <p>Erstellt am {{ user.created_at | date(format="%d.%m.%Y um %H:%M") }}</p>
+                <p>@{{ user.username}} - {{user.email}}</p>
+                <p class="user-date">Erstellt am {{ user.created_at | date(format="%d.%m.%Y um %H:%M") }}</p>
             </div>
             <div class="user-tools">
                 <a href="/manage/users/{{user.id}}"><button>Bearbeiten</button></a>

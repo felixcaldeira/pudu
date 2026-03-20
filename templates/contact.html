@@ -22,17 +22,19 @@
     .contact-container h1 {
         margin-bottom: 1rem;
     }
+    .contact-success, 
     error.contact-error {
-        background: #ff7b7b;
-        color: #6e1616;
         padding: 0.8rem;
         font-size: 0.9rem;
+        border-radius: 1rem;
+    }
+    error.contact-error {
+        background: var(--emphasis);
+        color: var(--background);
     }
     .contact-success {
-        background: #5ebd59;
-        color: var(--font);
-        padding: 0.8rem;
-        font-size: 0.9rem;
+        background: var(--button);
+        color: var(--accent);
     }
     .contact-container form {
         padding: 3rem 2rem;
@@ -108,12 +110,8 @@
         <h1>Kontakt</h1>
         <p style="white-space: pre-line;">PuDU-Netzwerk
             Schöne Straße 123
-            20000 Hamburg
-        </p>
-        <a class="unli" href="tel:+4912345">Tel.: 12345</a>
-        <a class="unli" href="mailto:info@pudu-netzwerk.de">
-            info@pudu-netzwerk.de
-        </a>
+            20000 Hamburg</p>
+        <p>E-Mail: <a class="unli" href="mailto:info@pudu-netzwerk.de">info@pudu-netzwerk.de</a></p>
     </section>
     <form action="/contact" method="post">
         {% if error %}

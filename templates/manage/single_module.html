@@ -1,4 +1,4 @@
-{% extends "manage/dashboard-base.html" %}
+{% extends "manage/dashboard_base.html" %}
 
 {% block manage_head  %}
 <style>
@@ -59,13 +59,26 @@
         flex-direction: row;
         flex-wrap: wrap;
         margin-top: 0.3rem;
-        gap: 0rem 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        background-color: var(--background);
+        gap: 0.5rem;
     }
-    .manage-content .checkbox-group {
-        display: inline;
+    .manage-content .grade-checkboxes input[type=checkbox]:checked ~ span {
+        background: var(--button);
+        border-color: var(--button);
+    }
+    .manage-content .grade-checkboxes input[type=checkbox] {
+        display: none;
+    }
+    .manage-content .grade-checkboxes span {
+        cursor: pointer;
+        color: var(--accent);
+        font-weight: 500;
+        padding: 0.2rem 0.6rem;
+        border-radius: 10rem;
+        border: solid 0.1rem var(--accent);
+        transition: all 0.3s ease;
+    }
+    .manage-content .grade-checkboxes span:hover {
+        opacity: 0.9;
     }
     .manage-content form input[type=text],
     .manage-content form textarea,
@@ -88,68 +101,6 @@
     .manage-content form select:focus, .manage-content form select:hover {
         outline: none;
         border-color: #fff;
-    }
-    .manage-content button[class="cancel"] {
-        background: var(--text);
-        color: var(--background);
-    }
-    .manage-content button[class="delete"] {
-        background: var(--emphasis);
-        color: var(--background);
-    }
-    .manage-content .modules {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-    .manage-content .module {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-    .manage-content .module-image {
-        background-image: url("/static/symbols/image-missing.svg");
-        background-size: contain;
-        background-position: center;
-        background-repeat: no-repeat;
-        height: 7rem;
-        aspect-ratio: 1 / 1;
-        border-radius: 1rem;
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-    .manage-content .module-image img {
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-    }
-    .manage-content .module-details {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        flex-grow: 1;
-    }
-    .manage-content .module-details h3 {
-        margin: 0 0 0.5rem 0;
-    }
-    .manage-content .module-details p {
-        margin: 0.2rem 0;
-        font-size: 0.9rem;
-        opacity: 0.8;
-    }
-    .manage-content .module-tools {
-        display: flex;
-        gap: 0.5rem;
-        align-self: flex-start;
-        flex-wrap: wrap;
-    }
-    .module-category-badge {
-        display: inline-block;
-        padding: 0.2rem 0.6rem;
-        background: var(--background);
-        border-radius: 0.5rem;
-        font-size: 0.85rem;
-        margin-top: 0.3rem;
     }
 </style>
 {% endblock manage_head  %}
@@ -184,7 +135,7 @@
         <select id="category_id" name="category_id">
             <!-- <option value="">Keine Fachgruppe</option> -->
             {% for category in module_categories %}
-                <option value="{{ category.id }}" {% if module_category.id == module_category.id %}selected{% endif%}>{{ category.title }}</option>
+                <option value="{{ category.id }}" {% if category.id == module_category.id %}selected{% endif%}>{{ category.title }}</option>
             {% endfor %}
         </select>
     </label>
@@ -202,8 +153,8 @@
         <div class="grade-checkboxes">
             {% for grade in range(end=13) %}
                 <label class="checkbox-group">
-                    <span>{{ grade + 1 }}. Klasse:</span>
                     <input type="checkbox" name="grades" value="{{ grade }}">
+                    <span>{{ grade + 1 }}. Klasse</span>
                 </label>
             {% endfor %}
         </div>
@@ -221,7 +172,20 @@
 </form>
 <script type="application/json" id="lesson-content">{{ module.content | safe }}</script>
 <script>
-    const editor = initQuillEditor($(".editor"), $(`script#lesson-content`).textContent)
+    const editor = initQuillEditor($(".editor"), $(`script#lesson-content`).textContent, [
+        ['bold', 'italic', 'underline', 'strike'],        
+        ['blockquote', 'code-block'],
+        ['link', 'image', 'video'/*, 'formula'*/],  // doesnt work atm
+
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
+        // [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript doesnt work atm
+        [{ 'indent': '-1'}, { 'indent': '+1' }],        
+        [{ 'direction': 'rtl' }],                     
+
+        [{ 'align': [] }],
+
+        ['clean']    
+    ])
 
     const form = document.querySelector('.manage-content form');
     form.addEventListener('submit', async (e) => {

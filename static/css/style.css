@@ -5,7 +5,9 @@ html,body,div,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acr
 
 :root {
     --text: black;
+    --text-greyed: hsl(0, 0%, 30%);
     --background: #efefe8;
+    --lift: #f9f9f2; 
     --accent: #344532;
     --button: #FED141;
     --emphasis: #4e0000;
@@ -39,6 +41,9 @@ i.symbol {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+}
+.ql-editor {
+    font-size: 1rem !important;
 }
 header i.logo {
     background-image: url("/static/images/logo.svg");
@@ -168,17 +173,18 @@ main {
 }
 main h1, h2, h3, h4 {
     font-family: 'TanStCanard';
+    font-weight: 900;
     color: #344532;
     letter-spacing: 0.1rem;
 }
 main h1 {
-    font-size: 2.5rem;
+    font-size: 3rem;
 }
 main h2 {
-    font-size: 2rem;
+    font-size: 2.4rem;
 }
 main h3 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
 }
 main b {
     font-weight: 600;
@@ -281,7 +287,6 @@ footer .partners img {
     .outer-header {
         border-radius: 1rem;
         padding: 0rem 1rem;
-        margin: 0rem 2rem;
         box-shadow: 0px 5px 3px -5px #000000
     }
     .outer-header .container {
@@ -421,6 +426,15 @@ footer .partners img {
     }
 }
 @media (max-width: 700px) {
+    main h1 {
+        font-size: 2.4rem;
+    }
+    main h2 {
+        font-size: 1.8rem;
+    }
+    main h3 {
+        font-size: 1.4rem;
+    }
     .footer-details {
         flex-direction: column;
     }

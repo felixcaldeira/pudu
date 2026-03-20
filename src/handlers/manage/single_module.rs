@@ -7,10 +7,8 @@ use crate::handlers::AppState;
 use crate::AppError;
 use crate::TERA;
 use crate::helpers::base_context;
-use crate::models::Image;
-use crate::models::module_category::{ModuleCategory};
-use crate::models::module::{Module, ModuleUpdate};
-use crate::models::{User};
+use crate::models::{User, Filters, Module, ModuleCategory, Image, GradeFlags};
+use crate::models::module::{ModuleUpdate};
 
 pub async fn get(
     State(state): State<AppState>,
@@ -19,16 +17,16 @@ pub async fn get(
 ) -> Result<Html<String>, AppError> {
     let mut context = base_context(&request);
 
-    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let module = Module::find_by_slug(&state.db, &module_slug)
+    let module = Module::find_by_slug(&state.db, &module_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let module_categories = ModuleCategory::find_all(&state.db).await?;
-    let users = User::find_all(&state.db).await?;
+    let module_categories = ModuleCategory::find_all(&state.db, Filters {page: Some(1), limit: None, order: Some("created_at".to_string()), descending:Some(false), published: None}).await?;
+    let users = User::find_all(&state.db, Filters {page: Some(1), limit: None, order: Some("first_name".to_string()), descending:Some(false), published: None}).await?;
 
     let mut image: Option<Image> = None;
 
@@ -55,11 +53,11 @@ pub async fn put(
 ) -> Result<Response, AppError> {
     let mut multipart = multipart?;
 
-    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let module = Module::find_by_slug(&state.db, &module_slug)
+    let module = Module::find_by_slug(&state.db, &module_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
@@ -70,7 +68,7 @@ pub async fn put(
     let mut image_id: Option<u32> = None;
     let mut category_id: Option<u32> = None;
     let mut user_id: Option<u32> = None;
-    let mut grade_flags: u32 = 0;
+    let mut grade_flags: GradeFlags = GradeFlags::UNSET;
 
     while let Some(field) = multipart.next_field().await? {
         let name = field.name().unwrap_or("").to_string();
@@ -127,7 +125,7 @@ pub async fn put(
             "grade_flags" => {
                 let text = field.text().await?;
                 if !text.trim().is_empty() {
-                    grade_flags = text.trim().parse().unwrap_or(0);
+                    grade_flags = GradeFlags::from_bits_truncate(text.trim().parse().unwrap_or(0));
                 }
             }
             _ => {}
@@ -137,7 +135,7 @@ pub async fn put(
     let category_id = category_id.ok_or(AppError::BadRequest("Kategorie ist erforderlich".into()))?;
 
     // if let Some(cat_id) = category_id {
-    let category = ModuleCategory::find_by_id(&state.db, category_id)
+    let category = ModuleCategory::find_by_id(&state.db, category_id, None)
         .await?
         .ok_or(AppError::NotFound)?;
     // }
@@ -168,11 +166,11 @@ pub async fn delete(
     State(state): State<AppState>,
     Path((category_slug, module_slug)): Path<(String, String)>,
 ) -> Result<Response, AppError> {
-    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let module = Module::find_by_slug(&state.db, &module_slug)
+    let module = Module::find_by_slug(&state.db, &module_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 

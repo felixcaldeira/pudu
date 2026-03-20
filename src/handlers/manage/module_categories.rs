@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Request, State, Path, Multipart, multipart::MultipartRejection},
+    extract::{Request, State, Path, Multipart, Query, multipart::MultipartRejection},
     response::{Html, Redirect, Response, IntoResponse},
     http::StatusCode,
 };
@@ -7,17 +7,18 @@ use crate::handlers::AppState;
 use crate::AppError;
 use crate::TERA;
 use crate::helpers::base_context;
-use crate::models::Image;
-use crate::models::module_category::{ModuleCategory, ModuleCategoryCreate, ModuleCategoryUpdate};
+use crate::models::{Image, Filters, ModuleCategory};
+use crate::models::module_category::{ModuleCategoryCreate, ModuleCategoryUpdate};
 use std::collections::HashMap;
 
 pub async fn get(
     State(state): State<AppState>,
+    Query(filters): Query<Filters>,
     request: Request,
 ) -> Result<Html<String>, AppError> {
     let mut context = base_context(&request);
 
-    let module_categories = ModuleCategory::find_all(&state.db).await?;
+    let module_categories = ModuleCategory::find_all(&state.db, filters).await?;
 
     let image_ids: Vec<u32> = module_categories
         .iter()
@@ -105,7 +106,7 @@ pub async fn put(
     multipart: Result<Multipart, MultipartRejection>,
 ) -> Result<Response, AppError> {
     let mut multipart = multipart?;
-    let category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+    let category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
@@ -161,14 +162,14 @@ pub async fn put(
 
     ModuleCategory::update(&state.db, category.id, update_data).await?;
 
-    Ok(Redirect::to(&format!("/manage/modules/{}", category.slug).to_string()).into_response())
+    Ok(Redirect::to("/manage/modules").into_response())
 }
 
 pub async fn delete(
     State(state): State<AppState>,
     Path(category_slug): Path<String>,
 ) -> Result<Response, AppError> {
-    let category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+    let category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
     if let Some(image_id) = category.image_id {

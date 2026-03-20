@@ -1,10 +1,12 @@
 // src/models/user.rs
 use serde::{Deserialize, Serialize};
 use chrono::{NaiveDateTime};
-use sqlx::FromRow;
+use sqlx::{FromRow, Arguments};
+
 use bcrypt::{hash, verify, DEFAULT_COST};
 use crate::AppError;
 use crate::UserFlags;
+use crate::models::Filters;
 
 #[derive(Clone, Debug, Serialize, Deserialize, FromRow)]
 pub struct User {
@@ -53,16 +55,20 @@ pub struct LoginRequest {
 
 impl User {
     pub async fn find_all(
-        pool: &sqlx::MySqlPool
+        pool: &sqlx::MySqlPool,
+        filters: Filters,
     ) -> Result<Vec<Self>, AppError> {
-        Ok(
-            sqlx::query_as!(
-                User,
-                "SELECT * FROM users",
-            )
+        let mut query = "SELECT * FROM users".to_string();
+        let mut args = sqlx::mysql::MySqlArguments::default();
+        
+        query.push_str(&filters.order_clause(&["id", "first_name", "last_name", "email", "username", "created_at"], "first_name", None));
+        filters.apply_pagination(&mut query, &mut args);
+
+        let users = sqlx::query_as_with::<_, User, _>(&query, args)
             .fetch_all(pool)
-            .await?
-        )
+            .await?;
+
+        Ok(users)
     }
 
     pub async fn find_by_username(pool: &sqlx::MySqlPool, username: &str) -> Result<Option<Self>, AppError> {
@@ -99,6 +105,30 @@ impl User {
             .fetch_optional(pool)
             .await?
         )
+    }
+
+    pub async fn find_by_ids(
+        pool: &sqlx::MySqlPool,
+        ids: &[u32],
+    ) -> Result<Vec<Self>, AppError> {
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let placeholders = ids.iter()
+            .map(|_| "?")
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let query = format!("SELECT * FROM users WHERE id IN ({})", placeholders);
+
+        let mut query_builder = sqlx::query_as::<_, Self>(&query);
+        
+        for id in ids {
+            query_builder = query_builder.bind(id);
+        }
+
+        Ok(query_builder.fetch_all(pool).await?)
     }
 
     pub async fn create(

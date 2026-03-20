@@ -24,11 +24,11 @@ pub async fn get(
 ) -> Result<Html<String>, AppError> {
     let mut context = base_context(&request);
 
-    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let module = Module::find_by_slug(&state.db, &module_slug)
+    let module = Module::find_by_slug(&state.db, &module_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
@@ -62,11 +62,11 @@ pub async fn post(
     multipart: Result<Multipart, MultipartRejection>,
 ) -> Result<Response, AppError> {
     let mut multipart = multipart?;
-    let category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+    let category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let module = Module::find_by_slug(&state.db, &module_slug)
+    let module = Module::find_by_slug(&state.db, &module_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 

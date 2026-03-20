@@ -7,10 +7,8 @@ use crate::handlers::AppState;
 use crate::AppError;
 use crate::TERA;
 use crate::helpers::base_context;
-use crate::models::module::Module;
-use crate::models::module_category::ModuleCategory;
-use crate::models::module_material::{ModuleMaterial, ModuleMaterialCreate, ModuleMaterialUpdate};
-use crate::models::File;
+use crate::models::{Module, ModuleCategory, ModuleMaterial, File};
+use crate::models::module_material::{ModuleMaterialCreate, ModuleMaterialUpdate};
 use std::collections::HashMap;
 use axum::extract::Request;
 use serde::Deserialize;
@@ -22,11 +20,11 @@ pub async fn get(
 ) -> Result<Html<String>, AppError> {
     let mut context = base_context(&request);
 
-    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+    let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let module = Module::find_by_slug(&state.db, &module_slug)
+    let module = Module::find_by_slug(&state.db, &module_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 
@@ -59,7 +57,7 @@ pub async fn post(
 ) -> Result<Response, AppError> {
     let mut multipart = multipart?;
 
-    let module = Module::find_by_slug(&state.db, &module_slug)
+    let module = Module::find_by_slug(&state.db, &module_slug, None)
         .await?
         .ok_or(AppError::NotFound)?;
 

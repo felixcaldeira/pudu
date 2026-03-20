@@ -7,6 +7,8 @@ pub mod error;
 pub mod login;
 pub mod register;
 pub mod manage;
+pub mod modules;
+pub mod single_module;
 pub mod contact;
 
 #[derive(Clone)]

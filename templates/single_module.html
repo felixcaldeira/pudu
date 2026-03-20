@@ -1,0 +1,39 @@
+{% extends "single_module_base.html" %}
+
+{% block module_head  %}
+<style>
+    
+    .ql-container {
+        border: none !important;
+    }
+    .ql-editor {
+        padding: 0rem !important;
+    }
+</style>
+{% endblock module_head  %}
+
+{% block module_main  %}
+<div class="module-nav">
+    <a href="/modules/{{module_category.slug}}/{{module.slug}}" class="active">Übersicht</a>
+    <a href="/modules/{{module_category.slug}}/{{module.slug}}/lessons">Stundenablauf</a>
+    <a href="/modules/{{module_category.slug}}/{{module.slug}}/materials">Materialien</a>
+</div>
+<div class="module_content">
+
+</div>
+<script>
+    const displayQuill = new Quill('.module_content', {
+        theme: 'snow',
+        readOnly: true,
+        modules: {
+            toolbar: false
+        }
+    });
+
+    try {
+        displayQuill.setContents({{ module.content | safe }});
+    } catch (e) {
+        console.error('Failed to parse content:', e);
+    }
+</script>
+{% endblock module_main  %}

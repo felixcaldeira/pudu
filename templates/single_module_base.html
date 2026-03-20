@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+     main {
+        gap: 0.5rem;
+    }
+    .main-header {
+        display: flex;
+        flex-direction: column;
+    }
+    .main-header .location {
+        color: var(--accent);
+    }
+    .module {
+        display: flex;
+        width: 100%;
+        border-radius: 2.5rem;
+        background: var(--lift);
+        box-shadow: 0px 1px 2px 1px rgba(0,0,0,0.1);
+    }
+    .module-header {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .module-image {
+        background-image: url("/static/symbols/image-missing.svg");
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        width: 20rem;
+        flex-shrink: 0;
+        border-radius: 1rem;
+        aspect-ratio: 1.2 / 1;
+        overflow: hidden;
+    }
+    main .module-image img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+    }
+    .module-details {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .module-description {
+        overflow: hidden;
+        width: 100%;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow-wrap: anywhere;
+    }
+    .module-metadata {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        border-top: 1px solid #e0dfce;
+        margin-top: 1.2rem;
+        padding-top: 0.6rem;
+        color: var(--text-greyed);
+        width: 100%;
+    }
+    .module-grades {
+        margin-top: 0.4rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem 0.4rem;
+    }
+    .module-grades > * {
+        text-wrap: nowrap;
+        background-color: var(--button);
+        color: var(--accent);
+        font-weight: 500;
+        padding: 0.2rem 0.6rem;
+        border-radius: 10rem;
+    }
+    .module-main {
+        display: flex;
+        gap: 1rem;
+        width: 100%;
+        border-top: 1px solid #e0dfce;
+        padding-top: 2.4rem;
+        margin-top: 1rem;
+        flex-direction: row-reverse;
+        justify-content: space-between;
+    }
+    .module-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    .module-nav a {
+        font-weight: 600;
+        padding: 0.2rem 1rem;
+        border: solid 0.1rem var(--accent);
+        border-radius: 2rem;
+        color: var(--accent);
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+    .module-nav a.active, 
+    .module-nav a:hover {
+        background-color: var(--accent);
+        color: var(--background);
+    }
+    @media (max-width: 600px) {
+        .module-header {
+            flex-direction: column-reverse;
+            gap: 0.5rem;
+        }
+        .module-image {
+            margin-top: 0.5rem;
+            width: unset;
+        }
+        .module-main {
+            flex-direction: column !important;
+            justify-content: center;
+            padding-top: 1rem;
+            gap: 1rem;
+        }
+        .module-nav {
+            flex-direction: row;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% block module_head %}
+{% endblock module_head %}
+
+{% endblock head %} 
+
+{% block content %}
+<section class="main-header">
+    <span class="location"><a href="/modules">Unterrichtseinheiten</a> / <a href="/modules/{{module_category.slug}}">{{module_category.title}}</a> / <a href="/modules/{{module.slug}}">{{module.title}}</a></span>
+</section>
+<section class="module-header">
+    <div class="module-details">
+        <h1>{{module.title}}</h1>
+        <p>{{module.description}}</p>
+        <div class="module-metadata">
+            {% if module.user_id %}
+                <p class="module-author">Von: {{ user.academic_title }} {{user.first_name}} {{user.last_name}}</p>
+            {% endif %}
+            <p class="module-date">
+                Veröffentlicht am: {{module.created_at | date(format="%d.%m.%Y")}}
+            </p>
+            {% if module.lesson_count > 0 %}
+                <p class="module-duration">{{module.lesson_count}}x Unterrichtsstunde{% if module.lesson_count > 1%}n{%endif%} (45 min.)</p>
+            {% endif %}
+            <div class="module-grades">
+                {% for grade in grades %}
+                    <span>{{grade}}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% if module.image_id %}
+        <div class="module-image">
+            <img src="/images/{{ image.nanoid }}.{{ image.ext }}" alt="{{ module.title }}">
+        </div>
+    {% endif %}
+</section>
+<section class="module-main">
+    {% block module_main %}
+    {% endblock module_main %}
+</section>
+{% endblock content %}

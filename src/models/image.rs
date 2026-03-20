@@ -66,7 +66,7 @@ impl Image {
 
         let query = format!("SELECT * FROM images WHERE id IN ({})", placeholders);
 
-        let mut query_builder = sqlx::query_as::<_, Image>(&query);
+        let mut query_builder = sqlx::query_as::<_, Self>(&query);
         
         for id in ids {
             query_builder = query_builder.bind(id);

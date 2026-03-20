@@ -18,11 +18,11 @@ use std::collections::HashMap;
 // ) -> Result<Html<String>, AppError> {
 //     let mut context = base_context(&request);
 
-//     let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+//     let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
 //         .await?
 //         .ok_or(AppError::NotFound)?;
 
-//     let module = Module::find_by_slug(&state.db, &module_slug)
+//     let module = Module::find_by_slug(&state.db, &module_slug, None)
 //         .await?
 //         .ok_or(AppError::NotFound)?;
 
@@ -51,11 +51,11 @@ use std::collections::HashMap;
 // ) -> Result<Response, AppError> {
 //     let mut multipart = multipart?;
 
-//     let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug)
+//     let module_category = ModuleCategory::find_by_slug(&state.db, &category_slug, None)
 //         .await?
 //         .ok_or(AppError::NotFound)?;
 
-//     let module = Module::find_by_slug(&state.db, &module_slug)
+//     let module = Module::find_by_slug(&state.db, &module_slug, None)
 //         .await?
 //         .ok_or(AppError::NotFound)?;
 

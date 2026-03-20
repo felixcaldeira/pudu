@@ -1,0 +1,112 @@
+{% extends "single_module_base.html" %}
+
+{% block module_head  %}
+<style>
+    .lesson {
+        display: flex;
+        gap: 1rem;
+    }
+    .lesson-header {
+        background: var(--accent);
+        color: var(--background);
+        opacity: 1;
+        padding: 1rem 0.7rem;
+        border-radius: 1.5rem;
+        user-select: none;
+        width: 25%;
+    }
+    .lesson-header p {
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-wrap: wrap;
+    }
+    .lesson-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        padding: 0.5rem;
+    }
+    .section {
+        display: flex;
+        flex-direction: column;
+    }
+    .section-header {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: space-between;
+        font-size: 1.5rem;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+    }
+    .section-header:has(.section-duration) {
+        border-top: solid 0.1rem #c7c6ad;
+        border-bottom: solid 0.1rem #c7c6ad;
+        padding: 0.3rem 0rem;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .section-title {
+        font-weight: 800;
+    }
+    .ql-container {
+        border: none !important;
+    }
+    .ql-editor {
+        padding: 0rem !important;
+    }
+</style>
+{% endblock module_head  %}
+
+{% block module_main  %}
+<div class="module-nav">
+    <a href="/modules/{{module_category.slug}}/{{module.slug}}">Übersicht</a>
+    <a href="/modules/{{module_category.slug}}/{{module.slug}}/lessons" class="active">Stundenablauf</a>
+    <a href="/modules/{{module_category.slug}}/{{module.slug}}/materials">Materialien</a>
+</div>
+<div class="module-lessons">
+    {% for lesson in lessons %}
+    <div class="lesson">
+        <div class="lesson-header">
+            <p>{{ lesson.position }}. Stunde:</p>
+            <p class="lesson-title">{{lesson.title}}</p>
+        </div>
+        
+        <container class="lesson-sections">
+            {% if sections[lesson.id] %}
+            {% for section in sections[lesson.id] %}
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">{{ section.title }}</span>
+                    {% if section.duration > 0 %}
+                    <span class="section-duration">{{section.duration}} min.</span>
+                    {% endif %}
+                </div>
+                <div class="section-content" data-content="{{ section.content }}">
+
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </container>
+    </div>
+    {% endfor %}
+</div>
+<script>
+    document.querySelectorAll('.section-content').forEach(function(el) {
+        const quill = new Quill(el, {
+            theme: 'snow',
+            readOnly: true,
+            modules: { toolbar: false }
+        });
+
+        try {
+            const raw = el.getAttribute('data-content');
+            if(!raw) return;
+            const content = JSON.parse(raw);
+            quill.setContents(content);
+        } catch(e) {
+            console.error('Failed to parse section content:', e);
+        }
+    });
+</script>
+{% endblock module_main  %}

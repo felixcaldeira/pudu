@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Request, State, Path, Multipart, multipart::MultipartRejection, FromRequest},
+    extract::{Request, State, Path, Multipart, Query, multipart::MultipartRejection, FromRequest},
     response::{Html, Redirect, Response, IntoResponse},
     http::StatusCode,
 };
@@ -8,16 +8,17 @@ use crate::AppError;
 use crate::TERA;
 use crate::helpers::base_context;
 use crate::models::Image;
-use crate::models::{User, PendingUser};
+use crate::models::{User, PendingUser, Filters};
 use std::collections::HashMap;
 
 pub async fn get(
     State(state): State<AppState>,
+    Query(filters): Query<Filters>,
     request: Request,
 ) -> Result<Html<String>, AppError> {
     let mut context = base_context(&request);
 
-    let users = User::find_all(&state.db).await?;
+    let users = User::find_all(&state.db, filters).await?;
 
     let image_ids: Vec<u32> = users
         .iter()

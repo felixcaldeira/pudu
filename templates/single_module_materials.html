@@ -1,0 +1,74 @@
+{% extends "single_module_base.html" %}
+
+{% block module_head  %}
+<style>
+    .module-materials {
+        width: 100%;
+        display: grid;
+        align-items: start;
+        grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+        gap: 1rem;
+    }
+    .material {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+        background: var(--accent);
+        color: var(--background);
+        padding: 0.7rem;
+        border-radius: 0.6rem;
+        position: relative;
+    }
+    .material-position {
+        display: inline-block;
+        font-weight: 600;
+        padding: 0.1rem;
+        border-radius: 0.4rem;
+        background: var(--button);
+        color: var(--accent);
+    }
+    .material img {
+        position: absolute;
+        width: 2rem;
+        right: 0.4rem;
+        top: 0.5rem;
+        pointer-events: none;
+    }
+    .material-title {
+        font-weight: 600;
+    }
+    .material-type {
+        text-transform: capitalize;
+        /* font-weight: 600; */
+    }
+</style>
+{% endblock module_head  %}
+
+{% block module_main  %}
+<div class="module-nav">
+    <a href="/modules/{{module_category.slug}}/{{module.slug}}">Übersicht</a>
+    <a href="/modules/{{module_category.slug}}/{{module.slug}}/lessons">Stundenablauf</a>
+    <a href="/modules/{{module_category.slug}}/{{module.slug}}/materials" class="active">Materialien</a>
+</div>
+<div class="module-materials">
+    {% for material in materials %}
+        <a href="/files/{{ files[material.file_id].file_name }}" target="_blank" class="material">
+            <span class="material-position">M{{material.position}}:</span>
+            <img src="/static/symbols/materials/{{material.material_type}}.svg" alt="" >
+            <p class="material-title">{{ material.title }}</p>
+            <p class="material-type">Dateityp: {{material.material_type}}</p>
+        </a>
+    {% endfor %}
+</div>
+{% endblock module_main  %}
+
+<!--
+    Arbeitsblatt
+    Audio
+    Interview
+    Quelle
+    Sachtext
+    Video
+    Sonstiges 
+-->

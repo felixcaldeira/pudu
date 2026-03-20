@@ -1,4 +1,4 @@
-{% extends "manage/dashboard-base.html" %}
+{% extends "manage/dashboard_base.html" %}
 
 {% block manage_head  %}
 <style>
@@ -105,6 +105,7 @@
         background-position: center;
         background-repeat: no-repeat;
         height: 7rem;
+        flex-shrink: 0;
         aspect-ratio: 1 / 1;
         border-radius: 1rem;
         overflow: hidden;
@@ -118,14 +119,32 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        align-items: flex-start;
+        flex-grow: 1;
+    }
+    .manage-content .category-description {
+        overflow: hidden;
+        width: 100%;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow-wrap: anywhere;
+    }
+    .manage-content .category-metadata {
+        color: var(--text-greyed);
+        letter-spacing: 0.07rem;
+        padding: 0.1rem 0rem 0.2rem 0rem;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        width: 100%;
     }
     .manage-content .category-tools {
         display: flex;
+        flex-direction: column;
         gap: 0.5rem;
         align-self: flex-start;
         justify-content: flex-end;
         margin-left: auto;
-        flex-wrap: wrap;
     }
 </style>
 {% endblock manage_head  %}
@@ -147,9 +166,10 @@
             </div>
             <div class="category-details {% if category.published%}published{% endif%}">
                 <a href="/manage/modules/{{category.slug}}"><h3>{{category.title}}</h3></a>
-                <p>{{category.description}}</p>
-                <p>Erstellt am {{category.created_at | date(format="%d.%m.%Y um %H:%M")}}</p>
-                <p>Zuletzt aktualisiert am {{category.updated_at | date(format="%d.%m.%Y um %H:%M")}}</p>
+                <!-- <p class="category-description">{{category.description}}</p> -->
+                <p class="category-metadata">{{category.module_count}} Unterrichtseinheiten</p>
+                <p class="category-metadata">Erstellt am {{category.created_at | date(format="%d.%m.%Y um %H:%M")}}</p>
+                <p class="category-metadata">Zuletzt aktualisiert am {{category.updated_at | date(format="%d.%m.%Y um %H:%M")}}</p>
             </div>
             <div class="category-tools">
                 <button data-type="edit">Bearbeiten</button>

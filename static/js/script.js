@@ -74,7 +74,7 @@ async function handleFormSubmit(form, options = {}) {
     }
 }
 
-function initQuillEditor(element, initialValue) {
+function initQuillEditor(element, initialValue, toolbar) {
     const editor = new Quill(element, {
         // theme: 'snow',
         // modules: {
@@ -85,6 +85,9 @@ function initQuillEditor(element, initialValue) {
         //         ['link', 'code-block']
         //     ]
         // },
+        modules: {
+            toolbar: toolbar || undefined
+        },
         theme: 'snow',
         placeholder: 'Inhalt hier schreiben...'
     });

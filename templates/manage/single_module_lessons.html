@@ -1,4 +1,4 @@
-{% extends "manage/dashboard-base.html" %}
+{% extends "manage/dashboard_base.html" %}
 
 {% block manage_head  %}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -344,7 +344,7 @@
                                 <strong><span class="section-number">{{ section.position }}</span>. Abschnitt: <span class="section-title">{{ section.title }}</span></strong>
                             </div>
                             
-                            <form class="section-form" action="/manage/modules/{{module_category.slug}}/{{module.slug}}/lessons/{{ lesson.id }}/sections/{{ section.id }}" method="put">
+                            <form class="section-form" data-section-id="{{ section.id }}" action="/manage/modules/{{module_category.slug}}/{{module.slug}}/lessons/{{ lesson.id }}/sections/{{ section.id }}" method="put">
                                 <error></error>
                                 <input type="hidden" name="position" value="{{ section.position }}" class="position-input">
                                 
@@ -382,8 +382,12 @@
         const form = el.closest('form');
         const sectionId = form.dataset.sectionId;
         const input = $('input[name="content"]', form);
-
-        sectionEditors[sectionId] = initQuillEditor(el, input.value)
+        sectionEditors[sectionId] = initQuillEditor(el, input.value, [
+            ['bold', 'italic', 'underline', 'strike'],
+            ['link'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['clean']
+        ]);
     });
     function updateOrder({
         items,
